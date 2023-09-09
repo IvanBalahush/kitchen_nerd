@@ -1,0 +1,9 @@
+# Variables
+
+LATEST_COMMIT := $$(git rev-parse HEAD)
+VERSION ?= latest
+
+run-local: ## Run api via `go run`
+	@DATABASE_URL="postgres://postgres:123456@localhost:5432/kitchennerd_db?sslmode=disable" \
+	CONSOLE_SERVER_ADDRESS=:9088 \
+	go run -ldflags "-X main.buildTag=`date -u +%Y%m%d.%H%M%S`-$(LATEST_COMMIT)" cmd/kitchen_nerd/main.go run
