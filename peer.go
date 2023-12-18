@@ -3,14 +3,15 @@ package kitchen_nerd
 import (
 	"context"
 	"errors"
-	"kitchen_nerd/console/consoleserver"
+	"kitchen_nerd/recipes"
 	"log"
 	"net"
 
 	"github.com/zeebo/errs"
 	"golang.org/x/sync/errgroup"
 
-	"kitchen_nerd/pkg/logger"
+	"kitchen_nerd/console/consoleserver"
+	"kitchen_nerd/tokens"
 	"kitchen_nerd/users"
 )
 
@@ -21,6 +22,12 @@ type DB interface {
 	// Users provides access to users db.
 	Users() users.DB
 
+	// Recipes provides access to recipes db.
+	Recipes() recipes.DB
+
+	// Tokens provides access to tokens db.
+	Tokens() tokens.DB
+
 	// Close closes underlying db connection.
 	Close()
 
@@ -30,19 +37,23 @@ type DB interface {
 
 // Config is the global configuration for kitchen nerd.
 type Config struct {
-	Console struct {
-		Server consoleserver.Config `json:"server"`
-	} `json:"console"`
+	DatabaseURL    string `env:"DATABASE_URL,notEmpty"`
+	ServerAddress  string `env:"SERVER_ADDRESS,notEmpty"`
+	StaticDir      string `env:"STATIC_DIR,notEmpty"`
+	ExportDataPath string `env:"EXPORT_DATA_PATH,notEmpty"`
 }
 
 type KitchenNerd struct {
 	Config   Config
-	Log      logger.Logger
 	Database DB
 
 	// Users exposes users related logic.
 	Users struct {
 		Service *users.Service
+	}
+
+	Recipes struct {
+		Service *recipes.Service
 	}
 
 	// Console web server with web UI.
@@ -53,28 +64,39 @@ type KitchenNerd struct {
 }
 
 // New is a constructor for KitchenNerd.
-func New(logger logger.Logger, config Config, db DB) (kitchenNerd *KitchenNerd, err error) {
+func New(config Config, db DB) (kitchenNerd *KitchenNerd, err error) {
 	kitchenNerd = &KitchenNerd{
-		Log:      logger,
 		Database: db,
 	}
 
 	{ // users setup.
-		kitchenNerd.Users.Service = users.NewService(logger, db.Users())
+		kitchenNerd.Users.Service = users.NewService(db.Users(), db.Tokens())
+	}
+
+	{ // recipes setup.
+		kitchenNerd.Recipes.Service = recipes.NewService(db.Recipes())
 	}
 
 	{ // console setup.
-		kitchenNerd.Console.Listener, err = net.Listen("tcp", config.Console.Server.Address)
+		kitchenNerd.Console.Listener, err = net.Listen("tcp", config.ServerAddress)
 		if err != nil {
 			return nil, err
 		}
 		log.Println("123")
-		kitchenNerd.Console.Endpoint = consoleserver.NewServer(
-			config.Console.Server,
-			logger,
+		cfg := consoleserver.Config{
+			ServerAddress: config.ServerAddress,
+			StaticDir:     config.StaticDir,
+		}
+
+		kitchenNerd.Console.Endpoint, err = consoleserver.NewServer(
+			cfg,
 			kitchenNerd.Console.Listener,
 			kitchenNerd.Users.Service,
+			kitchenNerd.Recipes.Service,
 		)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	return kitchenNerd, nil

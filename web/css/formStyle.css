@@ -1,0 +1,20 @@
+
+body {
+    background-color: #f5e6da; /* Бежевый фон */
+}
+.card {
+    background-color: #e0c1a7; /* Карамельный цвет для карточки */
+}
+.card-header {
+    background-color: #bf8d6d; /* Основной цвет заголовка карточки */
+    border-bottom: 1px solid #ad7d5e;
+    color: #ffffff; /* Белый цвет текста заголовка */
+}
+.btn-primary {
+    background-color: #8f5c4b; /* Цвет кнопки */
+    border-color: #8f5c4b;
+}
+.btn-primary:hover {
+    background-color: #6e4537; /* Цвет кнопки при наведении */
+    border-color: #6e4537;
+}

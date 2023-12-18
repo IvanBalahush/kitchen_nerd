@@ -4,23 +4,17 @@ import (
 	"context"
 	"kitchen_nerd"
 	"kitchen_nerd/database"
-	"kitchen_nerd/pkg/logger/zaplog"
+	"log"
 	"os"
 
-	"github.com/dmitrymomot/go-env"
+	"github.com/caarlos0/env/v6"
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/spf13/cobra"
 	"github.com/zeebo/errs"
 )
 
-// Error is a default error type for fastwallet cli.
-var Error = errs.Class("fastwallet cli error")
-
-var (
-	databaseConnectionString = env.MustString("DATABASE_URL")
-
-	// Console server
-	consoleServerAddress = env.MustString("CONSOLE_SERVER_ADDRESS")
-)
+// Error is a default error type for kitchen_nerd cli.
+var Error = errs.Class("kitchen_nerd cli error")
 
 // Config contains configurable values for kitchen nerd project.
 type Config struct {
@@ -30,10 +24,10 @@ type Config struct {
 
 // commands.
 var (
-	// fastwallet root cmd.
+	// kitchen_nerd root cmd.
 	rootCmd = &cobra.Command{
-		Use:   "fastwallet",
-		Short: "cli for interacting with fastwallet project",
+		Use:   "kitchen_nerd",
+		Short: "cli for interacting with kitchen nerd project",
 	}
 
 	runCmd = &cobra.Command{
@@ -42,7 +36,6 @@ var (
 		RunE:        cmdRun,
 		Annotations: map[string]string{"type": "run"},
 	}
-	runCfg Config
 )
 
 func init() {
@@ -58,12 +51,17 @@ func main() {
 
 func cmdRun(_ *cobra.Command, _ []string) (err error) {
 	ctx := context.Background()
-	log := zaplog.NewLog()
-	runCfg = createConfig()
+	config := new(kitchen_nerd.Config)
 
-	db, err := database.New(ctx, runCfg.Database)
+	err = env.Parse(config)
 	if err != nil {
-		//log.Error("Error starting master database on fastwallet service", Error.Wrap(err))
+		log.Println("could not parse env to config:", err)
+		return
+	}
+
+	db, err := database.New(ctx, config.DatabaseURL)
+	if err != nil {
+		//log.Error("Error starting master database on kitchen_nerd service", Error.Wrap(err))
 		return Error.Wrap(err)
 	}
 	defer db.Close()
@@ -71,12 +69,12 @@ func cmdRun(_ *cobra.Command, _ []string) (err error) {
 	// TODO: remove for production.
 	err = db.CreateSchema(ctx)
 	if err != nil {
-		log.Error("Error creating schema", Error.Wrap(err))
+		log.Println("Error creating schema", Error.Wrap(err))
 	}
 
-	kitchenNerd, err := kitchen_nerd.New(log, runCfg.Config, db)
+	kitchenNerd, err := kitchen_nerd.New(*config, db)
 	if err != nil {
-		log.Error("Error starting fastwallet service", Error.Wrap(err))
+		log.Println("Error starting kitchen_nerd service", Error.Wrap(err))
 		return Error.Wrap(err)
 	}
 
@@ -84,15 +82,4 @@ func cmdRun(_ *cobra.Command, _ []string) (err error) {
 	closeError := kitchenNerd.Close()
 
 	return Error.Wrap(errs.Combine(runError, closeError))
-}
-
-// createConfig creates config using env.
-func createConfig() (config Config) {
-	// Database
-	config.Database = databaseConnectionString
-
-	//Console
-	config.Console.Server.Address = consoleServerAddress
-
-	return config
 }

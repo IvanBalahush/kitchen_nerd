@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Register Page</title>
+    <!-- Подключение стилей Bootstrap (замените на актуальные ссылки) -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/web/css/formStyle.css">
+    <link rel="stylesheet" href="/web/css/style.css">
+    <link rel="stylesheet" href="/web/css/hamburgers.css">
+    <!-- Подключение Font Awesome для иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+<!--Navbar-->
+<nav class="navbar navbar-expand-lg navbar-light  navigBar myNavbar">
+    <div class="container">
+        <a href="#" class="navbar-brand mb-lg-0">
+            <img src="/web/images/iconfinder_Food_C213_2427867 (3).png" alt="Kitchen Nerd" class="d-inline-block mb-lg-3">
+            Kitchen Nerd
+        </a>
+        <button class="navbar-toggler hamburger hamburger--emphatic" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent1" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="hamburger-box">
+                        <span class="hamburger-inner">
+
+                        </span>
+                    </span>
+        </button>
+
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent1">
+
+        </div>
+    </div>
+</nav>
+
+<!--form-->
+<script>
+    function togglePassword() {
+        var passwordInput = document.getElementById("password");
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+        } else {
+            passwordInput.type = "password";
+        }
+    }
+
+    function sendData() {
+        // Очистка сообщений об ошибках
+        document.getElementById("emailError").innerHTML = "";
+        document.getElementById("usernameError").innerHTML = "";
+        document.getElementById("passwordError").innerHTML = "";
+        document.getElementById("repeatPasswordError").innerHTML = "";
+        document.getElementById("registrationError").innerHTML = "";
+
+        // Получение значений из полей ввода
+        var email = document.getElementById("email").value;
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        var repeatPassword = document.getElementById("repeatPassword").value;
+
+        // Простая валидация email, username, password и repeatPassword
+        if (!validateEmail(email)) {
+            document.getElementById("emailError").innerHTML = "Please enter a valid email address.";
+            return;
+        }
+
+        if (!validateUsername(username)) {
+            document.getElementById("usernameError").innerHTML = "Username must contain only letters and numbers.";
+            return;
+        }
+
+        if (!validatePassword(password)) {
+            document.getElementById("passwordError").innerHTML = "Password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character.";
+            return;
+        }
+
+        if (password !== repeatPassword) {
+            document.getElementById("repeatPasswordError").innerHTML = "Passwords do not match.";
+            return;
+        }
+
+        // Создание объекта с данными
+        var data = {
+            email: email,
+            username: username,
+            password: password,
+            repeatedPassword: repeatPassword
+        };
+
+        // Отправка данных на сервер с использованием fetch
+        fetch('http://localhost:8088/auth/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        // Попытаемся прочитать текст ответа сервера
+                        return response.json().then(errorData => {
+                            var errorMessage = errorData.error || 'User with such email address already exists.';
+                            throw new Error(errorMessage.split(':').pop().trim()); // Получаем часть после последнего двоеточия
+                        });
+                    } else {
+                        throw new Error('Registration failed. Check your information.');
+                    }
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Обработка ответа от сервера
+                console.log('Success:', data);
+                // После успешной регистрации, перенаправление на главную страницу
+                window.location.href = '#';
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                // Вывод сообщения об ошибке
+                document.getElementById("registrationError").innerHTML = error.message || "Registration failed. Check your information.";
+            });
+    }
+
+
+    // Простая валидация email
+    function validateEmail(email) {
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    // Простая валидация username
+    function validateUsername(username) {
+        var usernameRegex = /^[a-zA-Z0-9]+$/;
+        return usernameRegex.test(username);
+    }
+
+    // Продвинутая валидация пароля
+    function validatePassword(password) {
+        // Пароль должен содержать хотя бы одну строчную букву (a-z),
+        // одну прописную букву (A-Z), одну цифру (0-9) и один специальный символ.
+        var passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-]).{8,}$/;
+        return passwordRegex.test(password);
+    }
+</script>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Registration
+                </div>
+                <div class="card-body">
+                    <form id="registrationForm">
+                        <div class="form-group">
+                            <label for="email">Email:</label>
+                            <input type="text" class="form-control" id="email" placeholder="Enter your email">
+                            <div id="emailError" style="color: red;"></div> <!-- Сообщение об ошибке для email -->
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Username:</label>
+                            <input type="text" class="form-control" id="username" placeholder="Enter your username">
+                            <div id="usernameError" style="color: red;"></div> <!-- Сообщение об ошибке для username -->
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="password" placeholder="Enter your password">
+                                <div class="input-group-append">
+                  <span class="input-group-text" onclick="togglePassword()">
+                    <i class="far fa-eye"></i>
+                  </span>
+                                </div>
+                            </div>
+                            <div id="passwordError" style="color: red;"></div> <!-- Сообщение об ошибке для password -->
+                        </div>
+                        <div class="form-group">
+                            <label for="repeatPassword">Repeat Password:</label>
+                            <input type="password" class="form-control" id="repeatPassword" placeholder="Repeat your password">
+                            <div id="repeatPasswordError" style="color: red;"></div> <!-- Сообщение об ошибке для repeatPassword -->
+                        </div>
+                        <button type="button" class="btn btn-primary" onclick="sendData()">Register</button>
+                        <div id="registrationError" style="color: red;"></div> <!-- Сообщение об ошибке для регистрации -->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Подключение скриптов Bootstrap (замените на актуальные ссылки) -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+</body>
+</html>

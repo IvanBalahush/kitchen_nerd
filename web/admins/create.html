@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Login Page</title>
+    <!-- Подключение стилей Bootstrap (замените на актуальные ссылки) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/web/css/formStyle.css">
+    <link rel="stylesheet" href="/web/css/style.css">
+    <link rel="stylesheet" href="/web/css/hamburgers.css">
+</head>
+<body>
+<!--Navbar-->
+<nav class="navbar navbar-expand-lg navbar-light  navigBar myNavbar">
+    <div class="container">
+        <a href="#" class="navbar-brand mb-lg-0">
+            <img src="/web/images/iconfinder_Food_C213_2427867 (3).png" alt="Kitchen Nerd" class="d-inline-block mb-lg-3">
+            Kitchen Nerd
+        </a>
+        <button class="navbar-toggler hamburger hamburger--emphatic" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent1" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="hamburger-box">
+                        <span class="hamburger-inner">
+
+                        </span>
+                    </span>
+        </button>
+
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent1">
+
+        </div>
+    </div>
+</nav>
+
+<!--form-->
+
+<div class="container">
+
+    <h1>Create Recipe</h1>
+
+    <form id="recipeForm" action="javascript:void(0);">
+        <div class="mb-3">
+            <label for="title" class="form-label">Title:</label>
+            <input type="text" class="form-control" id="title" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="photo" class="form-label">Photo:</label>
+            <input type="file" class="form-control" id="photo" accept="image/*" onchange="handleFileSelect()">
+            <img id="selectedPhoto" style="max-width: 100%; margin-top: 10px;" />
+            <input type="hidden" id="photoBase64">
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description:</label>
+            <textarea class="form-control" id="description" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="instructions" class="form-label">Instructions:</label>
+            <textarea class="form-control" id="instructions" required></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Ingredients:</label>
+            <div id="ingredients-container">
+                <!-- Ingredients will be added dynamically here -->
+            </div>
+            <button type="button" class="btn btn-primary" onclick="addIngredient()">Add Ingredient</button>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="createRecipe()">Create Recipe</button>
+    </form>
+
+</div>
+
+<!-- Bootstrap JS, Popper.js, and jQuery -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let ingredientCounter = 0;
+
+    function handleFileSelect() {
+        const fileInput = document.getElementById('photo');
+        const imgElement = document.getElementById('selectedPhoto');
+        const photoBase64Input = document.getElementById('photoBase64');
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            imgElement.src = e.target.result;
+            photoBase64Input.value = e.target.result;
+        };
+
+        reader.readAsDataURL(file);
+    }
+
+    function addIngredient() {
+        ingredientCounter++;
+
+        const container = document.getElementById('ingredients-container');
+
+        const ingredientRow = document.createElement('div');
+        ingredientRow.className = 'row mb-3';
+
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'form-control col';
+        nameInput.name = `ingredients[${ingredientCounter}][name]`;
+        nameInput.placeholder = 'Name';
+
+        const quantityInput = document.createElement('input');
+        quantityInput.type = 'number';
+        quantityInput.className = 'form-control col';
+        quantityInput.name = `ingredients[${ingredientCounter}][quantity]`;
+        quantityInput.placeholder = 'Quantity';
+
+        const unitSelect = document.createElement('select');
+        unitSelect.className = 'form-select col';
+        unitSelect.name = `ingredients[${ingredientCounter}][unit]`;
+        const unitOptions = ["unit", "gram", "ounce", "cup"]; // Add your desired units
+        for (const option of unitOptions) {
+            const optionElement = document.createElement('option');
+            optionElement.value = option;
+            optionElement.text = option;
+            unitSelect.appendChild(optionElement);
+        }
+
+        const optionalContainer = document.createElement('div');
+        optionalContainer.className = 'col-2 form-check';
+
+        const optionalCheckbox = document.createElement('input');
+        optionalCheckbox.type = 'checkbox';
+        optionalCheckbox.className = 'form-check-input';
+        optionalCheckbox.name = `ingredients[${ingredientCounter}][optional]`;
+
+        const optionalLabel = document.createElement('label');
+        optionalLabel.className = 'form-check-label';
+        optionalLabel.innerText = 'Optional';
+
+        optionalContainer.appendChild(optionalCheckbox);
+        optionalContainer.appendChild(optionalLabel);
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn btn-danger col';
+        removeButton.innerText = 'Remove';
+        removeButton.onclick = function () {
+            container.removeChild(ingredientRow);
+        };
+
+        ingredientRow.appendChild(nameInput);
+        ingredientRow.appendChild(quantityInput);
+        ingredientRow.appendChild(unitSelect);
+        ingredientRow.appendChild(optionalContainer);
+        ingredientRow.appendChild(removeButton);
+
+        container.appendChild(ingredientRow);
+    }
+
+    function createRecipe() {
+        const title = document.getElementById('title').value;
+        const photoBase64 = document.getElementById('photoBase64').value;
+        const description = document.getElementById('description').value;
+        const instructions = document.getElementById('instructions').value;
+
+        const ingredients = [];
+        const ingredientRows = document.querySelectorAll('#ingredients-container .row');
+        ingredientRows.forEach(row => {
+            const name = row.querySelector('input[name$="[name]"]').value;
+            const quantity = parseFloat(row.querySelector('input[name$="[quantity]"]').value);
+            const unit = row.querySelector('select[name$="[unit]"]').value;
+            const optional = row.querySelector('input[name$="[optional]"]').checked;
+
+            ingredients.push({ name, quantity, unit, optional });
+        });
+
+        const recipe = {
+            title,
+            photoBase64,
+            description,
+            instructions,
+            ingredients
+        };
+
+        // Преобразуйте значения quantity в числа перед отправкой на сервер
+        recipe.ingredients.forEach(ingredient => {
+            ingredient.quantity = parseFloat(ingredient.quantity);
+        });
+
+        console.log(JSON.stringify(recipe));
+
+        fetch('http://localhost:8088/recipes/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(recipe)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                console.log('Recipe created successfully');
+                // Добавьте здесь код для переадресации или отображения сообщения об успешном создании
+            })
+            .catch(error => {
+                console.error('Error creating recipe:', error);
+                // Добавьте здесь код для отображения сообщения об ошибке
+            });
+    }
+
+
+</script>
+
+
+<!-- Подключение скриптов Bootstrap (замените на актуальные ссылки) -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+</body>
+</html>

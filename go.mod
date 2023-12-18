@@ -3,6 +3,7 @@ module kitchen_nerd
 go 1.20
 
 require (
+	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/dmitrymomot/go-env v1.0.2 // indirect
 	github.com/google/uuid v1.3.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
@@ -16,6 +17,7 @@ require (
 	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/jackc/pgx/v4 v4.18.1 // indirect
 	github.com/jackc/puddle v1.3.0 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/rs/cors v1.10.0 // indirect
 	github.com/spf13/cobra v1.7.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
